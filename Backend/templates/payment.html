@@ -9,11 +9,11 @@
 <body>
     <h1>Payment Page</h1>
     
-     <div id="payment-container">
+    <div id="payment-container">
         <h2>Amount to Pay: {{ pdata.amount }}</h2>
         <h4>{{ pdata.name }}</h4>
-        <h4>{{ pdata.email }}</h4>
-        <h4>{{ pdata.phone }}</h4>
+        <h4>{{ pdata.amount }}</h4>
+        <h4>{{ pdata.key }}</h4>
         
         <button id="pay-button">Pay Now</button>
     </div> 
@@ -22,7 +22,7 @@
         // Initialize Razorpay Checkout
         var options = {
             "key": "{{ pdata.key }}",  // Your Razorpay API key
-            "amount": "{{ pdata.amount}}",  // Amount to pay
+            "amount": "{{ pdata.amount }}",  // Amount to pay
             "currency": "{{ pdata.currency }}",  // Currency
             "name": "Kings of Cloud",  // Your business name
             "description": "Reservation Payment",  // Payment description
@@ -31,25 +31,31 @@
             "handler": function(response) {
                 // Handle success callback
                 console.log(response);
-                // After successful payment, you can redirect or perform other actions as needed
-                alert("Payment successful!");
+                // After successful payment, call function to send payment details to server
+                sendPaymentDetails();
             }
         };
 
         // Initialize Razorpay Checkout with options
         var rzp = new Razorpay(options);
 
-// Function to send payment details to the server
+        // Event listener for Pay Now button click
+        document.getElementById('pay-button').onclick = function(e) {
+            // Open Razorpay Checkout
+            rzp.open();
+        };
+
+        // Function to send payment details to the server
         function sendPaymentDetails() {
             var paymentData = {
                 order_id: "{{ pdata.order_id }}",
                 name: "{{ pdata.name }}",
                 email: "{{ pdata.email }}",
                 phone: "{{ pdata.phone }}",
-		person: "{{ pdata.person }}",
-		amount: "{{ pdata.amount }}"
-        	reservation_date: "{{ pdata.reservation_date }}",
-        	reservation_time: "{{ pdata.reservation_time }}",
+                person: "{{ pdata.person }}",
+                amount: "{{ pdata.amount }}",
+                reservation_date: "{{ pdata.reservation_date }}",
+                reservation_time: "{{ pdata.reservation_time }}"
             };
 
             fetch('http://localhost:5000/payment_success', {
@@ -72,19 +78,6 @@
                 // Handle error accordingly
             });
         }
-      
-
-            document.addEventListener("DOMContentLoaded", function(arg) {
-    // do something cool
-    rzp.open();
-            e.preventDefault();
-});
-
-        // Event listener for Pay Now button click
-        document.getElementById('pay-button').onclick = function(e) {
-            // Open Razorpay Checkout
-           
-        };
     </script>
 </body>
 </html>

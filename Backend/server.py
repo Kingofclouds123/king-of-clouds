@@ -133,19 +133,33 @@ def create_order():
         person = int(request.form['person'])  # Number of persons
         reservation_date = request.form['reservation-date']
         reservation_time = request.form['reservation-time']
-        amount = 2500 * person  # Amount per person
+        base_amount_per_person = 2500  # Base amount per person without tax
 
-        # Create order
-        order = client.order.create({'amount': amount * 100, 'currency': 'INR'})
+        # Calculate total amount before tax
+        total_amount_before_tax = base_amount_per_person * person
 
-        # Redirect to Razorpay payment gateway with order ID and form data as query parameters
-        return redirect(url_for('pay', order_id=order['id'], 
+        # Calculate tax (18%)
+        tax_rate = 0.18
+        tax_amount = total_amount_before_tax * tax_rate
+
+        # Calculate total amount including tax
+        total_amount_with_tax = total_amount_before_tax + tax_amount
+
+        # Create order in Razorpay with total amount including tax
+        order = client.order.create({
+            'amount': total_amount_with_tax * 100,  # Convert to paise (Indian currency)
+            'currency': 'INR'
+        })
+
+        # Redirect to payment page with order ID and form data as query parameters
+        return redirect(url_for('pay', order_id=order['id'],
                                 name=name, email=email, phone=phone,
                                 person=person, reservation_date=reservation_date,
-                                reservation_time=reservation_time, amount=amount, currency='INR'))
-        
+                                reservation_time=reservation_time, amount=total_amount_with_tax, currency='INR'))
+
     except Exception as e:
         return jsonify({'error': str(e)}), 400
+
 
     
 @app.route('/verify_payment', methods=['POST'])
@@ -192,7 +206,9 @@ def payment_success():
             'email': email,
             'phone': phone,
             'amount': amount,
-            'currency': currency
+            'person': person,
+            'reservation_date': reservation_date,
+            'reservation_time': reservation_time
         }
 
         # Insert the payment document into the payments collection
